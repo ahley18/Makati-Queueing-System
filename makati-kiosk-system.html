@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makati City Queueing Kiosk</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .city-seal {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            flex-shrink: 0;
+        }
+        
+        .header-title {
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .header-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            line-height: 1.2;
+            word-break: break-word;
+        }
+        
+        .header-title p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 500;
+            line-height: 1.3;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            flex-shrink: 0;
+        }
+        
+        .clock {
+            text-align: right;
+            min-width: 0;
+        }
+        
+        .time {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 4px;
+            line-height: 1;
+        }
+        
+        .date {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            line-height: 1.2;
+        }
+        
+        .ticket-status-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        
+        .ticket-status-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        
+        .instruction {
+            font-size: 1.4rem;
+            color: #475569;
+            margin-bottom: 30px;
+            font-weight: 500;
+            text-align: center;
+            line-height: 1.4;
+            max-width: 600px;
+        }
+        
+        /* Service Grid */
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+        }
+        
+        .service-tile {
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        
+        .service-tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--tile-color);
+        }
+        
+        .service-tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .service-tile:active {
+            transform: scale(0.98);
+            transition: transform 0.1s ease;
+        }
+        
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            filter: brightness(0.9);
+            flex-shrink: 0;
+        }
+        
+        .service-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e293b;
+            line-height: 1.4;
+            word-break: break-word;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .counter-number {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: var(--tile-color);
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .queue-count {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            background: #ef4444;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* Service Colors */
+        .service-1 { --tile-color: #1e3a8a; }
+        .service-2 { --tile-color: #1d4ed8; }
+        .service-3 { --tile-color: #475569; }
+        .service-4 { --tile-color: #64748b; }
+        .service-5 { --tile-color: #1e293b; }
+        .service-6 { --tile-color: #1e40af; }
+        .service-7 { --tile-color: #0d9488; }
+        .service-8 { --tile-color: #0f172a; }
+        .service-9 { --tile-color: #3b82f6; }
+        .service-10 { --tile-color: #0891b2; }
+        .service-11 { --tile-color: #7c3aed; }
+        
+        /* Utility Bar */
+        .utility-bar {
+            background: #1e293b;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+        }
+        
+        .utility-btn {
+            background: #334155;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+        
+        .utility-btn:hover {
+            background: #475569;
+            transform: translateY(-2px);
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            animation: slideUp 0.3s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .ticket-info {
+            margin: 30px 0;
+        }
+        
+        .ticket-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 10px;
+            line-height: 1;
+            word-break: break-all;
+        }
+        
+        .estimated-wait {
+            font-size: 1.2rem;
+            color: #64748b;
+            margin-bottom: 20px;
+            line-height: 1.3;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .modal-btn {
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            white-space: nowrap;
+        }
+        
+        .print-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .print-btn:hover {
+            background: #2563eb;
+        }
+        
+        .close-btn {
+            background: #e2e8f0;
+            color: #475569;
+        }
+        
+        .close-btn:hover {
+            background: #cbd5e1;
+        }
+        
+        .cancel-btn {
+            background: #ef4444 !important;
+            color: white !important;
+        }
+        
+        .cancel-btn:hover {
+            background: #dc2626 !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+        
+        /* Loading */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 90%;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Error */
+        .error {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid #fecaca;
+            display: none;
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        /* Enhanced Responsive Design */
+        @media (max-width: 1400px) {
+            .services-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 18px;
+            }
+            
+            .main-content {
+                padding: 30px;
+            }
+            
+            .instruction {
+                font-size: 1.3rem;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .services-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 16px;
+            }
+            
+            .header {
+                padding: 20px 25px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.6rem;
+            }
+            
+            .time {
+                font-size: 1.6rem;
+            }
+            
+            .ticket-status-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .services-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 15px;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                padding: 20px;
+                text-align: center;
+            }
+            
+            .header-left {
+                justify-content: center;
+            }
+            
+            .header-right {
+                width: 100%;
+                justify-content: center;
+                gap: 20px;
+            }
+            
+            .main-content {
+                padding: 25px;
+            }
+            
+            .instruction {
+                font-size: 1.2rem;
+                margin-bottom: 25px;
+            }
+            
+            .service-tile {
+                padding: 25px 15px;
+                min-height: 160px;
+            }
+            
+            .service-icon {
+                font-size: 2.5rem;
+            }
+            
+            .service-name {
+                font-size: 0.9rem;
+            }
+            
+            .utility-bar {
+                padding: 15px 25px;
+                gap: 20px;
+            }
+            
+            .utility-btn {
+                padding: 10px 25px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+                max-width: 500px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.4rem;
+            }
+            
+            .header-title p {
+                font-size: 0.9rem;
+            }
+            
+            .city-seal {
+                width: 50px;
+                height: 50px;
+                font-size: 25px;
+            }
+            
+            .time {
+                font-size: 1.4rem;
+            }
+            
+            .date {
+                font-size: 0.8rem;
+            }
+            
+            .ticket-status-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .instruction {
+                font-size: 1.1rem;
+                margin-bottom: 20px;
+            }
+            
+            .service-tile {
+                padding: 20px 12px;
+                min-height: 140px;
+            }
+            
+            .service-icon {
+                font-size: 2rem;
+                margin-bottom: 10px;
+            }
+            
+            .service-name {
+                font-size: 0.8rem;
+            }
+            
+            .counter-number {
+                width: 25px;
+                height: 25px;
+                font-size: 0.8rem;
+                top: 10px;
+                right: 10px;
+            }
+            
+            .queue-count {
+                font-size: 0.7rem;
+                padding: 3px 6px;
+                bottom: 8px;
+                right: 10px;
+            }
+            
+            .utility-bar {
+                padding: 12px 20px;
+                gap: 15px;
+                flex-direction: column;
+            }
+            
+            .utility-btn {
+                padding: 8px 20px;
+                font-size: 0.8rem;
+                justify-content: center;
+            }
+            
+            .modal-content {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .ticket-number {
+                font-size: 2.5rem;
+            }
+            
+            .estimated-wait {
+                font-size: 1rem;
+            }
+            
+            .modal-buttons {
+                gap: 10px;
+            }
+            
+            .modal-btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+                gap: 10px;
+            }
+            
+            .header {
+                padding: 15px;
+                gap: 12px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .header-title p {
+                font-size: 0.8rem;
+            }
+            
+            .city-seal {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+            
+            .header-right {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .time {
+                font-size: 1.2rem;
+            }
+            
+            .date {
+                font-size: 0.7rem;
+            }
+            
+            .ticket-status-btn {
+                padding: 6px 12px;
+                font-size: 0.7rem;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .instruction {
+                font-size: 1rem;
+                margin-bottom: 15px;
+            }
+            
+            .service-tile {
+                padding: 15px 10px;
+                min-height: 120px;
+            }
+            
+            .service-icon {
+                font-size: 1.8rem;
+                margin-bottom: 8px;
+            }
+            
+            .service-name {
+                font-size: 0.75rem;
+            }
+            
+            .counter-number {
+                width: 22px;
+                height: 22px;
+                font-size: 0.7rem;
+                top: 8px;
+                right: 8px;
+            }
+            
+            .queue-count {
+                font-size: 0.6rem;
+                padding: 2px 5px;
+                bottom: 6px;
+                right: 8px;
+            }
+            
+            .utility-bar {
+                padding: 10px 15px;
+                gap: 10px;
+            }
+            
+            .utility-btn {
+                padding: 6px 15px;
+                font-size: 0.7rem;
+            }
+            
+            .modal-content {
+                padding: 20px;
+                margin: 5px;
+            }
+            
+            .ticket-number {
+                font-size: 2rem;
+            }
+            
+            .estimated-wait {
+                font-size: 0.9rem;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .modal-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .header-title h1 {
+                font-size: 1.1rem;
+            }
+            
+            .time {
+                font-size: 1.1rem;
+            }
+            
+            .service-tile {
+                min-height: 110px;
+            }
+            
+            .service-icon {
+                font-size: 1.5rem;
+            }
+            
+            .service-name {
+                font-size: 0.7rem;
+            }
+            
+            .instruction {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Landscape orientation adjustments for mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .header {
+                padding: 10px 20px;
+            }
+            
+            .header-title h1 {
+                font-size: 1.2rem;
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+            
+            .instruction {
+                font-size: 1rem;
+                margin-bottom: 15px;
+            }
+            
+            .services-grid {
+                gap: 8px;
+            }
+            
+            .service-tile {
+                padding: 12px 8px;
+                min-height: 100px;
+            }
+            
+            .service-icon {
+                font-size: 1.5rem;
+                margin-bottom: 5px;
+            }
+            
+            .service-name {
+                font-size: 0.7rem;
+            }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .service-tile {
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.12);
+            }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .service-tile:hover {
+                transform: none;
+            }
+            
+            .service-tile:active {
+                transform: scale(0.95);
+            }
+            
+            .ticket-status-btn:hover {
+                transform: none;
+            }
+            
+            .utility-btn:hover {
+                transform: none;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .header {
+                background: #1e293b !important;
+                color: white !important;
+            }
+            
+            .service-tile {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+            }
+            
+            .utility-bar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-left">
+            <div class="city-seal">🏛️</div>
+            <div class="header-title">
+                <h1>MAKATI CITY GOVERNMENT</h1>
+                <p>Kiosk Queueing System</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="clock">
+                <div class="time" id="time">00:00:00</div>
+                <div class="date" id="date">Loading...</div>
+            </div>
+            <button class="ticket-status-btn" onclick="checkTicketStatus()">
+                🎫 Check Ticket Status
+            </button>
+        </div>
+    </header>
+    
+    <main class="main-content">
+        <div class="error" id="errorMessage"></div>
+        <p class="instruction">📍 Touch a service to get your queue ticket</p>
+        
+        <div class="services-grid" id="servicesGrid">
+            <!-- Services will be loaded dynamically -->
+        </div>
+    </main>
+    
+    <footer class="utility-bar">
+        <button class="utility-btn" onclick="refreshQueue()">
+            🔁 Refresh Queue
+        </button>
+        <button class="utility-btn" onclick="showHelp()">
+            📞 Helpdesk / Concierge
+        </button>
+        <button class="utility-btn" onclick="reprintTicket()">
+            📄 Print Last Ticket
+        </button>
+    </footer>
+    
+    <!-- Ticket Modal -->
+    <div class="modal" id="ticketModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px; color: #1e293b;">Your Queue Ticket</h2>
+            <div class="ticket-info">
+                <div class="ticket-number" id="ticketNumber">A001</div>
+                <div class="service-name" id="selectedService" style="font-size: 1.1rem; margin-bottom: 10px;">Service Name</div>
+                <div class="estimated-wait">Estimated wait time: <strong id="waitTime">15 minutes</strong></div>
+                <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px;">
+                    <p style="font-size: 0.9rem; color: #64748b; margin-bottom: 10px;">Please wait for your number to be called on the display screen.</p>
+                    <p style="font-size: 0.9rem; color: #64748b;">Keep this ticket safe!</p>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn print-btn" onclick="printTicket()">
+                    🖨️ Print Ticket
+                </button>
+                <button class="modal-btn cancel-btn" onclick="cancelTicket()">
+                    ❌ Cancel Ticket
+                </button>
+                <button class="modal-btn close-btn" onclick="closeModal()">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Modal -->
+    <div class="loading" id="loadingModal">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Processing your request...</p>
+        </div>
+    </div>
+    
+    <script>
+        // Configuration
+        const API_URL = './index.php';
+        let lastTicket = null;
+        let queueData = {};
+        
+        // Update time and date
+        function updateDateTime() {
+            const now = new Date();
+            const timeElement = document.getElementById('time');
+            const dateElement = document.getElementById('date');
+            
+            // Format time
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Format date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Update every second
+        setInterval(updateDateTime, 1000);
+        updateDateTime();
+        
+        // Fetch and use live counter names
+        async function fetchCounters() {
+            const res = await fetch('./index.php?action=public_counters');
+            const data = await res.json();
+            return data.counters.filter(c => c.enabled);
+        }
+        
+        // Initialize services grid with live names
+        async function initializeServices() {
+            const grid = document.getElementById('servicesGrid');
+            grid.innerHTML = '';
+            const counters = await fetchCounters();
+            counters.forEach((counter, index) => {
+                const tile = document.createElement('div');
+                tile.className = `service-tile service-${counter.counter_number}`;
+                tile.style.setProperty('--tile-color', '#1e3a8a'); // Optionally use a color map
+                tile.setAttribute('data-service-id', counter.counter_number);
+                tile.setAttribute('data-service-name', counter.name);
+                tile.innerHTML = `
+                    <div class="counter-number">${counter.counter_number}</div>
+                    <div class="service-icon">${counter.icon || '❓'}</div>
+                    <div class="service-name">${counter.name}</div>
+                    <div class="queue-count" id="queue-count-${counter.counter_number}">0</div>
+                `;
+                tile.addEventListener('click', () => generateTicket(counter.counter_number, counter.name));
+                grid.appendChild(tile);
+            });
+        }
+        
+        // Show/hide loading
+        function showLoading(show = true) {
+            document.getElementById('loadingModal').style.display = show ? 'flex' : 'none';
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // API Functions
+        async function getQueueStatus() {
+            try {
+                const response = await fetch(`${API_URL}?action=status`);
+                if (!response.ok) throw new Error('Failed to fetch queue status');
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching queue status:', error);
+                throw error;
+            }
+        }
+        
+        async function createTicket(serviceType, counter) {
+            try {
+                const response = await fetch(`${API_URL}?action=enqueue`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        service_type: serviceType,
+                        counter: counter
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to create ticket');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                throw error;
+            }
+        }
+        
+        async function getQueueSummary() {
+            try {
+                const response = await fetch(`${API_URL}?action=summary`);
+                if (!response.ok) throw new Error('Failed to fetch queue summary');
+                return await response.json();
+            } catch (error) {
+                console.error('Error fetching queue summary:', error);
+                throw error;
+            }
+        }
+        
+        async function cancelTicketAPI(ticketCode) {
+            try {
+                const response = await fetch(`${API_URL}?action=clear&ticket_code=${encodeURIComponent(ticketCode)}`, {
+                    method: 'DELETE'
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to cancel ticket');
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Error canceling ticket:', error);
+                throw error;
+            }
+        }
+        
+        // Generate ticket
+        async function generateTicket(serviceId, serviceName) {
+            showLoading(true);
+            
+            try {
+                // Create ticket via API
+                const ticketData = await createTicket(serviceName, serviceId);
+                
+                // Update modal with ticket information
+                document.getElementById('ticketNumber').textContent = ticketData.ticket_code;
+                document.getElementById('selectedService').textContent = serviceName;
+                
+                // Calculate estimated wait time based on queue position
+                const summary = await getQueueSummary();
+                const counterData = Array.isArray(summary.counters)
+                    ? summary.counters.find(c => c.counter === serviceId)
+                    : null;
+                const waitTime = counterData && counterData.queue_length !== undefined
+                    ? Math.max(5, counterData.queue_length * 3)
+                    : 15;
+                document.getElementById('waitTime').textContent = `${waitTime} minutes`;
+                
+                // Store last ticket
+                lastTicket = {
+                    number: ticketData.ticket_code,
+                    service: serviceName,
+                    waitTime: waitTime,
+                    timestamp: new Date()
+                };
+                
+                // Show modal
+                document.getElementById('ticketModal').style.display = 'flex';
+                
+                // Update queue counts
+                await updateQueueCounts();
+                
+            } catch (error) {
+                showError(`Failed to create ticket: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Update queue counts
+        async function updateQueueCounts() {
+            try {
+                const summary = await getQueueSummary();
+                
+                summary.counters.forEach(counter => {
+                    const countElement = document.getElementById(`queue-count-${counter.counter_id}`);
+                    if (countElement) {
+                        countElement.textContent = counter.queue_length;
+                        countElement.style.display = counter.queue_length > 0 ? 'block' : 'none';
+                    }
+                });
+            } catch (error) {
+                console.error('Error updating queue counts:', error);
+            }
+        }
+        
+        // Check ticket status
+        async function checkTicketStatus() {
+            const ticketNumber = prompt('Enter your ticket number:');
+            if (!ticketNumber) return;
+            
+            showLoading(true);
+            
+            try {
+                const status = await getQueueStatus();
+                const ticket = status.tickets.find(t => t.ticket_code === ticketNumber);
+                
+                if (ticket) {
+                    const position = ticket.position || 'Unknown';
+                    const statusText = ticket.status || 'Waiting';
+                    alert(`Ticket: ${ticketNumber}\nStatus: ${statusText}\nPosition: ${position}\nPlease wait for your number to be called.`);
+                } else {
+                    alert(`Ticket ${ticketNumber} not found. Please check your ticket number.`);
+                }
+            } catch (error) {
+                showError(`Failed to check ticket status: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        // Modal functions
+        function closeModal() {
+            document.getElementById('ticketModal').style.display = 'none';
+        }
+        
+        async function cancelTicket() {
+            if (!lastTicket) {
+                alert('No ticket to cancel.');
+                return;
+            }
+            
+            const confirmCancel = confirm(`Are you sure you want to cancel ticket ${lastTicket.number}?\n\nThis action cannot be undone.`);
+            if (!confirmCancel) {
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                await cancelTicketAPI(lastTicket.number);
+                
+                // Show success message
+                alert(`Ticket ${lastTicket.number} has been cancelled successfully.\n\nYou can now select a different service if needed.`);
+                
+                // Clear last ticket
+                lastTicket = null;
+                
+                // Close modal
+                closeModal();
+                
+                // Update queue counts
+                await updateQueueCounts();
+                
+            } catch (error) {
+                showError(`Failed to cancel ticket: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function printTicket() {
+            if (lastTicket) {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Queue Ticket</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+                                .ticket { border: 2px solid #000; padding: 20px; margin: 20px; }
+                                .ticket-number { font-size: 2em; font-weight: bold; margin: 10px 0; }
+                                .service { font-size: 1.2em; margin: 10px 0; }
+                                .timestamp { font-size: 0.9em; color: #666; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="ticket">
+                                <h2>MAKATI CITY GOVERNMENT</h2>
+                                <h3>Queue Ticket</h3>
+                                <div class="ticket-number">${lastTicket.number}</div>
+                                <div class="service">${lastTicket.service}</div>
+                                <div class="timestamp">${lastTicket.timestamp.toLocaleString()}</div>
+                                <p>Please wait for your number to be called.</p>
+                            </div>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            }
+            closeModal();
+        }
+        
+        // Utility functions
+        async function refreshQueue() {
+            showLoading(true);
+            try {
+                await updateQueueCounts();
+                showError('Queue information updated successfully!');
+            } catch (error) {
+                showError(`Failed to refresh queue: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function showHelp() {
+            alert('Connecting to helpdesk...\n\nPlease wait for assistance or dial 168 for immediate help.\n\nLocation: Ground Floor, Makati City Hall');
+        }
+        
+        function reprintTicket() {
+            if (lastTicket) {
+                printTicket();
+            } else {
+                alert('No previous ticket to reprint.');
+            }
+        }
+        
+        // Initialize the kiosk
+        async function initializeKiosk() {
+            initializeServices();
+            
+            // Initial queue update
+            try {
+                await updateQueueCounts();
+            } catch (error) {
+                console.error('Failed to initialize queue counts:', error);
+            }
+            
+            // Update queue counts every 1 second
+            setInterval(updateQueueCounts, 1000);
+        }
+        
+        // Prevent right-click on kiosk
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initializeKiosk);
+    </script>
+</body>
+</html> 

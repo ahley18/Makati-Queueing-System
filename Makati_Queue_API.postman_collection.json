@@ -1,0 +1,510 @@
+{
+	"info": {
+		"_postman_id": "makati-queue-api",
+		"name": "Makati Queue Management System API",
+		"description": "Complete API collection for testing the Makati Queue Management System endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12345678"
+	},
+	"item": [
+		{
+			"name": "Queue Status",
+			"item": [
+				{
+					"name": "Get All Current Queue Statuses",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each counter has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    jsonData.forEach(function(counter) {",
+									"        pm.expect(counter).to.have.property('counter');",
+									"        pm.expect(counter).to.have.property('service');",
+									"        pm.expect(counter).to.have.property('status');",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/status",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"status"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Queue Summary",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has summary fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_active');",
+									"    pm.expect(jsonData).to.have.property('now_serving');",
+									"    pm.expect(jsonData).to.have.property('waiting');",
+									"    pm.expect(jsonData).to.have.property('counters');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/summary",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"summary"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for retrieving queue status information"
+		},
+		{
+			"name": "Queue Management",
+			"item": [
+				{
+					"name": "Add New Queue Entry - Business Permit",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"});",
+									"",
+									"pm.test(\"Response has ticket_code\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('ticket_code');",
+									"    pm.expect(jsonData.ticket_code).to.match(/^BP-\\d{3,4}$/);",
+									"});",
+									"",
+									"// Store the ticket code for later use",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('last_ticket_code', jsonData.ticket_code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_type\": \"Business Permit\",\n  \"counter\": 1\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/enqueue",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"enqueue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add New Queue Entry - Makatizen GCash",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"});",
+									"",
+									"pm.test(\"Response has ticket_code\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('ticket_code');",
+									"    pm.expect(jsonData.ticket_code).to.match(/^GC-\\d{3,4}$/);",
+									"});",
+									"",
+									"// Store the ticket code for later use",
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set('last_ticket_code', jsonData.ticket_code);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_type\": \"Makatizen GCash Concern\",\n  \"counter\": 11\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/enqueue",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"enqueue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Queue Status - Now Serving",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"});",
+									"",
+									"pm.test(\"Response has message field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"{{last_ticket_code}}\",\n  \"status\": \"Now Serving\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/status/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"status",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Queue Status - Waiting",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"{{last_ticket_code}}\",\n  \"status\": \"Waiting\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/status/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"status",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Ticket",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success', true);",
+									"});",
+									"",
+									"pm.test(\"Response has message field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clear/{{last_ticket_code}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"clear",
+								"{{last_ticket_code}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Endpoints for managing queue tickets and status updates"
+		},
+		{
+			"name": "Error Testing",
+			"item": [
+				{
+					"name": "Add Ticket - Invalid Counter",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Response has error field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_type\": \"Business Permit\",\n  \"counter\": 999\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/enqueue",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"enqueue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Ticket - Missing Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_type\": \"Business Permit\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/enqueue",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"enqueue"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Invalid Ticket",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Response has error field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('error');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/clear/INVALID-999",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"clear",
+								"INVALID-999"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "Test error scenarios and edge cases"
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:3000",
+			"type": "string"
+		}
+	]
+} 

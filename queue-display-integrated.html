@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Makati Queue Display System</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+        
+        .datetime {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .time {
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            line-height: 1;
+        }
+        
+        .date {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.2;
+        }
+        
+        /* Connection Status */
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        
+        .status-dot.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.disconnected {
+            background: #ef4444;
+        }
+        
+        .status-dot.polling {
+            background: #3b82f6;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        /* Main Container */
+        .container {
+            flex: 1;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+            overflow-y: auto;
+        }
+        
+        /* Counter Cards */
+        .counter-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .counter-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: var(--accent-color);
+            transition: height 0.3s ease;
+        }
+        
+        .counter-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+        }
+        
+        .counter-card.now-serving {
+            animation: pulse 2s infinite;
+            border: 3px solid #10b981;
+        }
+        
+        .counter-card.now-serving::before {
+            height: 100%;
+            opacity: 0.1;
+            background: #10b981;
+        }
+        
+        .counter-card.waiting {
+            border: 3px solid #f59e0b;
+        }
+        
+        .counter-card.waiting::before {
+            height: 100%;
+            opacity: 0.1;
+            background: #f59e0b;
+        }
+        
+        .counter-card.closed {
+            opacity: 0.6;
+            background: #f8fafc;
+        }
+        
+        /* Real-time update animations */
+        .counter-card.updating {
+            animation: updateFlash 0.5s ease-in-out;
+        }
+        
+        @keyframes updateFlash {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+            100% { transform: scale(1); }
+        }
+        
+        .counter-code.updating {
+            animation: codeUpdate 0.3s ease-in-out;
+        }
+        
+        @keyframes codeUpdate {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; color: #3b82f6; }
+            100% { opacity: 1; }
+        }
+        
+        .counter-header {
+            background: #1e293b;
+            color: white;
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+            align-self: flex-start;
+        }
+        
+        .counter-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .counter-icon {
+            font-size: 3rem;
+            opacity: 0.8;
+            flex-shrink: 0;
+        }
+        
+        .counter-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .counter-code {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 8px;
+            letter-spacing: -0.02em;
+            word-break: break-word;
+            line-height: 1.1;
+        }
+        
+        .service-name {
+            font-size: 1.1rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 10px;
+            word-break: break-word;
+            line-height: 1.3;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+        
+        .status-badge.now-serving {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-badge.waiting {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status-badge.closed {
+            background: #6b7280;
+            color: white;
+        }
+        
+        /* Counter Specific Colors */
+        .counter-1 { --accent-color: #38bdf8; }
+        .counter-2 { --accent-color: #14b8a6; }
+        .counter-3 { --accent-color: #6366f1; }
+        .counter-4 { --accent-color: #34d399; }
+        .counter-5 { --accent-color: #3b82f6; }
+        .counter-6 { --accent-color: #94a3b8; }
+        .counter-7 { --accent-color: #06b6d4; }
+        .counter-8 { --accent-color: #22d3ee; }
+        .counter-9 { --accent-color: #a78bfa; }
+        .counter-10 { --accent-color: #86efac; }
+        .counter-11 { --accent-color: #c084fc; }
+        
+        /* Statistics Bar */
+        .stats-bar {
+            background: white;
+            padding: 20px 40px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #6b7280;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .stat-number {
+            font-weight: 700;
+            color: #1e293b;
+        }
+        
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 350px;
+        }
+        
+        .toast {
+            background: white;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+            border-left: 4px solid #10b981;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .toast.show {
+            transform: translateX(0);
+        }
+        
+        .toast-title {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 4px;
+        }
+        
+        .toast-message {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        /* Enhanced Responsive Design */
+        @media (max-width: 1400px) {
+            .container {
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 25px;
+                padding: 30px;
+            }
+            
+            .header {
+                padding: 20px 30px;
+            }
+            
+            .header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .time {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                padding: 25px;
+            }
+            
+            .counter-card {
+                padding: 25px;
+            }
+            
+            .counter-code {
+                font-size: 2.2rem;
+            }
+            
+            .counter-icon {
+                font-size: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 992px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .datetime {
+                text-align: center;
+            }
+            
+            .time {
+                font-size: 1.6rem;
+            }
+            
+            .date {
+                font-size: 1rem;
+            }
+            
+            .container {
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 20px;
+                padding: 20px;
+            }
+            
+            .stats-bar {
+                padding: 15px 20px;
+                flex-direction: row;
+                justify-content: space-around;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                padding: 15px 20px;
+                gap: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+                line-height: 1.3;
+            }
+            
+            .time {
+                font-size: 1.3rem;
+            }
+            
+            .date {
+                font-size: 0.85rem;
+            }
+            
+            .connection-status {
+                font-size: 0.8rem;
+            }
+            
+            .container {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .counter-card {
+                padding: 18px;
+                min-height: 160px;
+            }
+            
+            .counter-code {
+                font-size: 1.6rem;
+                line-height: 1.1;
+            }
+            
+            .counter-icon {
+                font-size: 1.8rem;
+            }
+            
+            .service-name {
+                font-size: 0.9rem;
+                line-height: 1.2;
+            }
+            
+            .counter-content {
+                gap: 12px;
+            }
+            
+            .counter-header {
+                padding: 6px 15px;
+                font-size: 0.8rem;
+                margin-bottom: 15px;
+            }
+            
+            .status-badge {
+                padding: 3px 10px;
+                font-size: 0.7rem;
+                margin-top: 8px;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+                padding: 12px 15px;
+                font-size: 0.85rem;
+            }
+            
+            .stat-item {
+                justify-content: center;
+                min-width: auto;
+                gap: 6px;
+            }
+            
+            .toast-container {
+                left: 15px;
+                right: 15px;
+                max-width: none;
+                top: 15px;
+            }
+            
+            .toast {
+                padding: 12px 16px;
+                margin-bottom: 8px;
+                font-size: 0.85rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 12px 15px;
+                gap: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.3rem;
+                line-height: 1.2;
+            }
+            
+            .time {
+                font-size: 1.1rem;
+            }
+            
+            .date {
+                font-size: 0.75rem;
+            }
+            
+            .connection-status {
+                font-size: 0.75rem;
+            }
+            
+            .container {
+                padding: 8px;
+                gap: 10px;
+            }
+            
+            .counter-card {
+                padding: 15px;
+                min-height: 140px;
+            }
+            
+            .counter-code {
+                font-size: 1.4rem;
+                line-height: 1.1;
+            }
+            
+            .counter-icon {
+                font-size: 1.6rem;
+            }
+            
+            .service-name {
+                font-size: 0.8rem;
+                line-height: 1.2;
+            }
+            
+            .counter-header {
+                padding: 5px 12px;
+                font-size: 0.75rem;
+                margin-bottom: 12px;
+            }
+            
+            .status-badge {
+                padding: 2px 8px;
+                font-size: 0.65rem;
+                margin-top: 6px;
+            }
+            
+            .counter-content {
+                gap: 10px;
+            }
+            
+            .stats-bar {
+                padding: 10px 12px;
+                font-size: 0.75rem;
+                gap: 6px;
+            }
+            
+            .stat-item {
+                gap: 4px;
+            }
+            
+            .toast-container {
+                left: 10px;
+                right: 10px;
+                top: 10px;
+            }
+            
+            .toast {
+                padding: 10px 14px;
+                margin-bottom: 6px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .header {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            
+            .header h1 {
+                font-size: 1.1rem;
+                line-height: 1.2;
+            }
+            
+            .time {
+                font-size: 1rem;
+            }
+            
+            .date {
+                font-size: 0.7rem;
+            }
+            
+            .connection-status {
+                font-size: 0.7rem;
+            }
+            
+            .container {
+                padding: 6px;
+                gap: 8px;
+            }
+            
+            .counter-card {
+                padding: 12px;
+                min-height: 120px;
+            }
+            
+            .counter-code {
+                font-size: 1.2rem;
+                line-height: 1.1;
+            }
+            
+            .counter-icon {
+                font-size: 1.4rem;
+            }
+            
+            .service-name {
+                font-size: 0.75rem;
+                line-height: 1.2;
+            }
+            
+            .counter-header {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+                margin-bottom: 10px;
+            }
+            
+            .status-badge {
+                padding: 2px 6px;
+                font-size: 0.6rem;
+                margin-top: 5px;
+            }
+            
+            .counter-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .stats-bar {
+                padding: 8px 10px;
+                font-size: 0.7rem;
+                gap: 5px;
+            }
+            
+            .stat-item {
+                gap: 3px;
+            }
+            
+            .toast-container {
+                left: 8px;
+                right: 8px;
+                top: 8px;
+            }
+            
+            .toast {
+                padding: 8px 12px;
+                margin-bottom: 5px;
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* Landscape orientation adjustments for mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .header {
+                padding: 10px 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.4rem;
+            }
+            
+            .container {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .counter-card {
+                padding: 15px;
+                min-height: 140px;
+            }
+            
+            .counter-code {
+                font-size: 1.3rem;
+            }
+            
+            .counter-icon {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .counter-card {
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .counter-card:hover {
+                transform: none;
+            }
+            
+            .counter-card:active {
+                transform: scale(0.98);
+                transition: transform 0.1s ease;
+            }
+        }
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+            body {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .counter-card {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            .header {
+                background: #1e3c72 !important;
+                color: white !important;
+            }
+            
+            .counter-card {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #e5e7eb;
+            }
+            
+            .stats-bar {
+                border-top: 1px solid #e5e7eb;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Makati Queue Management System</h1>
+        <div class="datetime">
+            <div class="time" id="time">00:00:00</div>
+            <div class="date" id="date">Loading...</div>
+            <div class="connection-status">
+                <div class="status-dot" id="connectionStatus"></div>
+                <span id="connectionText">Connecting...</span>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container" id="counterContainer">
+        <!-- Counters will be dynamically populated -->
+    </main>
+    
+    <div class="stats-bar">
+        <div class="stat-item">
+            <span>Total Active:</span>
+            <span class="stat-number" id="totalActive">0</span>
+        </div>
+        <div class="stat-item">
+            <span>Now Serving:</span>
+            <span class="stat-number" id="nowServing">0</span>
+        </div>
+        <div class="stat-item">
+            <span>Waiting:</span>
+            <span class="stat-number" id="waiting">0</span>
+        </div>
+    </div>
+    
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <script>
+        // Configuration
+        const API_URL = './index.php';
+        const REFRESH_INTERVAL = 1000; // 1 second - ultra-responsive polling for real-time updates
+        const STATS_REFRESH_INTERVAL = 5000; // 5 seconds - frequent stats updates
+        
+        // State
+        let currentStatus = [];
+        let isConnected = false;
+        let socket = null;
+        
+        // Global state for counters
+        let allCounters = [];
+        let counterNames = {};
+        let counterIcons = {};
+        async function fetchCounterNames() {
+            const res = await fetch('./index.php?action=public_counters');
+            const data = await res.json();
+            counterNames = {};
+            counterIcons = {};
+            allCounters = data.counters || [];
+            data.counters.forEach(c => {
+                counterNames[c.counter_number] = c.name;
+                counterIcons[c.counter_number] = c.icon || '❓';
+            });
+        }
+        
+        // DOM Elements
+        const counterContainer = document.getElementById('counterContainer');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectionText = document.getElementById('connectionText');
+        const totalActive = document.getElementById('totalActive');
+        const nowServing = document.getElementById('nowServing');
+        const waiting = document.getElementById('waiting');
+        const toastContainer = document.getElementById('toastContainer');
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+            
+            // Fetch and use live counter names and icons
+            // On load, fetch names and then start polling
+            (async function() {
+                await fetchCounterNames();
+                // Load initial data immediately
+                loadQueueStatus();
+                loadQueueSummary();
+                
+                // Start aggressive polling for real-time updates
+                setInterval(loadQueueStatus, REFRESH_INTERVAL);
+                setInterval(loadQueueSummary, STATS_REFRESH_INTERVAL);
+                
+                // Initialize Socket.IO as backup (optional)
+                // initializeRealTimeConnection(); // Removed socket.io
+            })();
+        });
+        
+        // Update date and time
+        function updateDateTime() {
+            const now = new Date();
+            const timeElement = document.getElementById('time');
+            const dateElement = document.getElementById('date');
+            
+            // Format time
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Format date
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('en-US', options);
+        }
+        
+        // Load queue status
+        async function loadQueueStatus() {
+            try {
+                const response = await fetch(`${API_URL}?action=status`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateConnectionStatus(true);
+                
+                // Check for changes and update with visual feedback
+                const hasChanges = checkForChanges(data);
+                updateCounterDisplay(data, hasChanges);
+                
+            } catch (error) {
+                console.error('Error loading queue status:', error);
+                updateConnectionStatus(false);
+            }
+        }
+        
+        // Load queue summary
+        async function loadQueueSummary() {
+            try {
+                const response = await fetch(`${API_URL}?action=summary`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                updateStatistics(data);
+                
+            } catch (error) {
+                console.error('Error loading queue summary:', error);
+            }
+        }
+        
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            isConnected = connected;
+            const statusDot = connectionStatus;
+            const statusText = connectionText;
+            
+            if (connected) {
+                statusDot.className = 'status-dot polling';
+                statusText.textContent = 'Polling every 1s';
+            } else {
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = 'Disconnected';
+            }
+        }
+        
+        // Check for changes in queue status
+        function checkForChanges(newStatus) {
+            if (currentStatus.length === 0) {
+                return false; // First load, no changes to detect
+            }
+            
+            let hasChanges = false;
+            
+            newStatus.forEach(counter => {
+                const previous = currentStatus.find(c => c.counter === counter.counter);
+                if (previous) {
+                    // Check if ticket code changed
+                    if (previous.code !== counter.code) {
+                        hasChanges = true;
+                        console.log(`Counter ${counter.counter} ticket changed: ${previous.code} → ${counter.code}`);
+                    }
+                    // Check if status changed
+                    if (previous.status !== counter.status) {
+                        hasChanges = true;
+                        console.log(`Counter ${counter.counter} status changed: ${previous.status} → ${counter.status}`);
+                    }
+                }
+            });
+            
+            return hasChanges;
+        }
+        
+        // Update counter display
+        function updateCounterDisplay(statusData, hasChanges = false) {
+            // Dynamically create counter data for all counters from backend
+            const counters = allCounters.map(c => {
+                const counterData = statusData.find(item => item.counter === c.counter_number);
+                if (counterData) {
+                    return counterData;
+                } else {
+                    return {
+                        counter: c.counter_number,
+                        code: null,
+                        service: c.name,
+                        status: 'Closed'
+                    };
+                }
+            });
+            
+            // Check for changes and show notifications
+            if (currentStatus.length > 0 && hasChanges) {
+                counters.forEach(counter => {
+                    const previous = currentStatus.find(c => c.counter === counter.counter);
+                    if (previous) {
+                        if (previous.code !== counter.code || previous.status !== counter.status) {
+                            showToast(`${counter.service} - ${counter.status}`, `Counter ${counter.counter} updated`);
+                            
+                            // Add visual feedback for changed counters
+                            setTimeout(() => {
+                                const counterCard = document.querySelector(`.counter-card.counter-${counter.counter}`);
+                                if (counterCard) {
+                                    counterCard.classList.add('updating');
+                                    setTimeout(() => {
+                                        counterCard.classList.remove('updating');
+                                    }, 500);
+                                }
+                            }, 100);
+                        }
+                    }
+                });
+            }
+            
+            currentStatus = counters;
+            renderCounters(counters);
+        }
+        
+        // Render counters
+        function renderCounters(counters) {
+            counterContainer.innerHTML = '';
+            counters.filter(counter => allCounters.find(c => c.counter_number === counter.counter && c.enabled)).forEach(counter => {
+                const counterCard = document.createElement('div');
+                counterCard.className = `counter-card counter-${counter.counter}`;
+                
+                if (counter.status === 'Now Serving') {
+                    counterCard.classList.add('now-serving');
+                } else if (counter.status === 'Waiting') {
+                    counterCard.classList.add('waiting');
+                } else if (counter.status === 'Closed') {
+                    counterCard.classList.add('closed');
+                }
+                
+                counterCard.innerHTML = `
+                    <div class="counter-header">COUNTER ${counter.counter}</div>
+                    <div class="counter-content">
+                        <div class="counter-icon">${counterIcons[counter.counter] || '❓'}</div>
+                        <div class="counter-info">
+                            <div class="counter-code" data-counter="${counter.counter}">${counter.code || '---'}</div>
+                            <div class="service-name">${counter.service}</div>
+                            <div class="status-badge ${counter.status.toLowerCase().replace(' ', '-')}">${counter.status}</div>
+                        </div>
+                    </div>
+                `;
+                
+                counterContainer.appendChild(counterCard);
+            });
+        }
+        
+        // Update specific counter with animation
+        function updateCounterWithAnimation(counterNumber, newData) {
+            const counterCard = document.querySelector(`.counter-card.counter-${counterNumber}`);
+            const codeElement = counterCard.querySelector('.counter-code');
+            const statusBadge = counterCard.querySelector('.status-badge');
+            
+            // Add update animation
+            counterCard.classList.add('updating');
+            codeElement.classList.add('updating');
+            
+            // Update the content
+            codeElement.textContent = newData.code || '---';
+            statusBadge.textContent = newData.status;
+            statusBadge.className = `status-badge ${newData.status.toLowerCase().replace(' ', '-')}`;
+            
+            // Update counter card classes
+            counterCard.className = `counter-card counter-${counterNumber}`;
+            if (newData.status === 'Now Serving') {
+                counterCard.classList.add('now-serving');
+            } else if (newData.status === 'Waiting') {
+                counterCard.classList.add('waiting');
+            } else if (newData.status === 'Closed') {
+                counterCard.classList.add('closed');
+            }
+            
+            // Remove animation classes after animation completes
+            setTimeout(() => {
+                counterCard.classList.remove('updating');
+                codeElement.classList.remove('updating');
+            }, 500);
+        }
+        
+        // Update statistics
+        function updateStatistics(data) {
+            totalActive.textContent = data.total_active || 0;
+            nowServing.textContent = data.now_serving || 0;
+            waiting.textContent = data.waiting || 0;
+        }
+        
+        // Show toast notification
+        function showToast(title, message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => {
+                toast.classList.add('show');
+            }, 100);
+            
+            // Remove toast after 5 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }, 5000);
+        }
+        
+        // Helper functions
+        function getServiceName(counter) {
+            return counterNames[counter] || 'Unknown Service';
+        }
+        
+        function getServiceIcon(counter) {
+            const icons = {
+                1: '🏢',
+                2: '🏠',
+                3: '📄',
+                4: '🏥',
+                5: '💉',
+                6: '🆕',
+                7: '♻️',
+                8: '🖐️',
+                9: '❓',
+                10: '📤',
+                11: '💸'
+            };
+            return icons[counter] || '📋';
+        }
+        
+        // Removed socket.io/WebSocket initialization
+    </script>
+</body>
+</html> 

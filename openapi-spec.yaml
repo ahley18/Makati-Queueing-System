@@ -1,0 +1,444 @@
+openapi: 3.0.3
+info:
+  title: Makati Queue Management System API
+  description: |
+    API for managing queue tickets and counter status for Makati City Government services.
+    
+    ## Service Types
+    | Prefix | Service | Counter |
+    |--------|---------|---------|
+    | BP | Business Permit | 1 |
+    | RT | Real Estate Tax | 2 |
+    | CT | Community Tax | 3 |
+    | HC | Health Certificate | 4 |
+    | VP | VaxCert PH | 5 |
+    | MC | Makatizen Card (General) | 6 |
+    | MR | Makatizen Renewal | 7 |
+    | MB | Makatizen Biometrics | 8 |
+    | MI | Makatizen Inquiry/Follow-ups | 9 |
+    | CR | Makatizen Card Releasing | 10 |
+    | GC | Makatizen GCash Concern | 11 |
+  version: 2.0.0
+  contact:
+    name: Makati City IT Department
+    email: it@makati.gov.ph
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.makati.gov.ph/queue
+    description: Production server
+  - url: http://localhost:3000
+    description: Development server
+
+paths:
+  /status:
+    get:
+      summary: Get all current queue statuses
+      description: Returns the current status of all counters and their active tickets
+      operationId: getQueueStatus
+      tags:
+        - Queue Status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CounterStatus'
+              examples:
+                success:
+                  summary: Sample response
+                  value:
+                    - counter: 1
+                      code: "BP-002"
+                      service: "Business Permit"
+                      status: "Now Serving"
+                    - counter: 2
+                      code: "RT-0012"
+                      service: "Real Estate Tax"
+                      status: "Waiting"
+                    - counter: 3
+                      code: null
+                      service: "Community Tax"
+                      status: "Closed"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /enqueue:
+    post:
+      summary: Add new queue entry
+      description: Creates a new ticket for a specific service/counter
+      operationId: addQueueEntry
+      tags:
+        - Queue Management
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnqueueRequest'
+            examples:
+              business_permit:
+                summary: Business Permit ticket
+                value:
+                  service_type: "Business Permit"
+                  counter: 1
+              makatizen:
+                summary: Makatizen GCash Concern ticket
+                value:
+                  service_type: "Makatizen GCash Concern"
+                  counter: 11
+      responses:
+        '200':
+          description: Ticket created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EnqueueResponse'
+              examples:
+                success:
+                  summary: Successful ticket creation
+                  value:
+                    success: true
+                    ticket_code: "GC-0034"
+                    message: "Ticket added to queue at Counter 11"
+        '400':
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Counter not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /status/{counter}:
+    patch:
+      summary: Update queue status
+      description: Updates the status of a ticket at a specific counter
+      operationId: updateQueueStatus
+      tags:
+        - Queue Management
+      parameters:
+        - name: counter
+          in: path
+          required: true
+          description: Counter number (1-11)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 11
+          example: 2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatusUpdateRequest'
+            examples:
+              now_serving:
+                summary: Set ticket to "Now Serving"
+                value:
+                  code: "RT-0012"
+                  status: "Now Serving"
+              waiting:
+                summary: Set ticket to "Waiting"
+                value:
+                  code: "RT-0012"
+                  status: "Waiting"
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatusUpdateResponse'
+              examples:
+                success:
+                  summary: Successful status update
+                  value:
+                    success: true
+                    message: "Queue updated for Counter 2"
+        '400':
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Counter or ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /clear/{ticket_code}:
+    delete:
+      summary: Clear or close a ticket
+      description: Marks a ticket as completed and clears it from the system
+      operationId: clearTicket
+      tags:
+        - Queue Management
+      parameters:
+        - name: ticket_code
+          in: path
+          required: true
+          description: Ticket code to clear (e.g., GC-0034)
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}-\d{3,4}$'
+          example: "GC-0034"
+      responses:
+        '200':
+          description: Ticket cleared successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClearResponse'
+              examples:
+                success:
+                  summary: Successful ticket clearance
+                  value:
+                    success: true
+                    message: "Ticket GC-0034 has been completed"
+        '404':
+          description: Ticket not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /summary:
+    get:
+      summary: Get queue summary by counter
+      description: Returns a comprehensive summary of queue statistics for all counters
+      operationId: getQueueSummary
+      tags:
+        - Queue Status
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SummaryResponse'
+              examples:
+                success:
+                  summary: Sample summary response
+                  value:
+                    total_active: 11
+                    now_serving: 6
+                    waiting: 5
+                    counters:
+                      - counter: 1
+                        code: "BP-002"
+                        status: "Now Serving"
+                      - counter: 4
+                        code: "HC-0021"
+                        status: "Waiting"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    CounterStatus:
+      type: object
+      properties:
+        counter:
+          type: integer
+          description: Counter number (1-11)
+          example: 1
+        code:
+          type: string
+          nullable: true
+          description: Ticket code (e.g., BP-002)
+          example: "BP-002"
+        service:
+          type: string
+          description: Service name
+          example: "Business Permit"
+        status:
+          type: string
+          enum: [Now Serving, Waiting, Called, Done, Closed]
+          description: Current status of the counter
+          example: "Now Serving"
+      required:
+        - counter
+        - service
+        - status
+
+    EnqueueRequest:
+      type: object
+      properties:
+        service_type:
+          type: string
+          description: Service type name
+          example: "Business Permit"
+        counter:
+          type: integer
+          minimum: 1
+          maximum: 11
+          description: Counter number
+          example: 1
+      required:
+        - service_type
+        - counter
+
+    EnqueueResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        ticket_code:
+          type: string
+          description: Generated ticket code
+          example: "GC-0034"
+        message:
+          type: string
+          description: Success message
+          example: "Ticket added to queue at Counter 11"
+      required:
+        - success
+        - ticket_code
+        - message
+
+    StatusUpdateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          description: Ticket code to update
+          example: "RT-0012"
+        status:
+          type: string
+          enum: [Now Serving, Waiting, Done]
+          description: New status for the ticket
+          example: "Now Serving"
+      required:
+        - code
+        - status
+
+    StatusUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Queue updated for Counter 2"
+      required:
+        - success
+        - message
+
+    ClearResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          description: Success message
+          example: "Ticket GC-0034 has been completed"
+      required:
+        - success
+        - message
+
+    SummaryResponse:
+      type: object
+      properties:
+        total_active:
+          type: integer
+          description: Total number of active tickets
+          example: 11
+        now_serving:
+          type: integer
+          description: Number of tickets currently being served
+          example: 6
+        waiting:
+          type: integer
+          description: Number of tickets waiting
+          example: 5
+        counters:
+          type: array
+          items:
+            type: object
+            properties:
+              counter:
+                type: integer
+                description: Counter number
+                example: 1
+              code:
+                type: string
+                description: Ticket code
+                example: "BP-002"
+              status:
+                type: string
+                enum: [Now Serving, Waiting]
+                description: Current status
+                example: "Now Serving"
+            required:
+              - counter
+              - code
+              - status
+      required:
+        - total_active
+        - now_serving
+        - waiting
+        - counters
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Counter not found"
+      required:
+        - error
+
+tags:
+  - name: Queue Status
+    description: Endpoints for retrieving queue status information
+  - name: Queue Management
+    description: Endpoints for managing queue tickets and status updates
+
+externalDocs:
+  description: Find more info about Makati City Government
+  url: https://www.makati.gov.ph 
